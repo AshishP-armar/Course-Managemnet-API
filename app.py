@@ -204,9 +204,9 @@ def get_buy_course():
     # Course List of users Buy courses
     buy_course_list = []
     for course in data:
-        
         course_data = Course.query.filter_by(id = course[0]).first()
         
+        # To append course deitals according to course name, price
         buy_course_list.append({
             "Buy Course ID" : course.id,
             "Course Name" :  course_data.name,
