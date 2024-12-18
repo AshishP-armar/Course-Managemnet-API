@@ -95,7 +95,7 @@ def signin():
         # session["jwt"] = token
 
         # return jsonify({'message': 'Login successful', 'token': token}), 200
-        response = jsonify({'message': 'Login successful',"Token" : access_token})
+        response = jsonify({'message': 'Login successful',"Token" : access_token,"Refresh Token" : refresh_token})
         set_access_cookies(response, access_token)
         set_refresh_cookies(response, refresh_token)
         return response, 200
