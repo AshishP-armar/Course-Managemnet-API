@@ -5,16 +5,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 from flask_migrate import Migrate
 from flask_jwt_extended import jwt_required, get_jwt_identity,verify_jwt_in_request
+from dotenv import load_dotenv
+import os
 
 
+load_dotenv()
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///API.db'
-app.config['JWT_SECRET_KEY'] = 'Atp@4466'
-app.config['SECRET_KEY'] = 'Atp@4466'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+app.config['JWT_SECRET_KEY'] = os.getenv("SECRET_KEY")
+app.config['SECRET_KEY'] = os.getenv("JWT_KEY")
 db.init_app(app)
 jwt = JWTManager(app)
 migrate = Migrate(app, db)
-
 
 # For Sign Up or Register the User.
 @app.route("/signup", methods = ['POST'])
@@ -135,7 +137,11 @@ def get_course():
         return jsonify({"message" : "Course Not Found"}),404
     
     return jsonify({'course' : [{
-        'Course_id' : course.id, "Course_Name" : course.name, "Course_Description" : course.description}  for course in data
+        'Course_Id' : course.id,
+         "Course_Name" : course.name, 
+         "Course_Description" : course.description,
+         "Course Price" : course.price}  
+         for course in data
     ]})
 
 
@@ -164,6 +170,30 @@ def delete_course():
     db.session.commit()
 
     return jsonify({"Message" : "Course Delete SuccessFully"})
+
+
+@app.route("/update_course/<int:course_id>", methods = ["PUT"])
+@jwt_required()
+def update_course(course_id):
+    course = Course.query.filter_by(id = course_id).first()
+    print("oucrse is : ",course.name)
+    if not course:
+        return jsonify({"Error" : "Course Not Found"}),404
+    
+    data = request.get_json()
+    print(data)
+    if "course_name" in data:
+        course.name = data["course_name"]
+        print(course.name)
+    if "price" in data:
+        course.price = data["price"]
+    if "description" in data:
+        course.description = data["description"]
+
+    db.session.commit()
+
+    return jsonify({"Message" : "Updated Successfully"}),200
+
 
 
 # To buy courses  in this user is login required
@@ -204,8 +234,9 @@ def get_buy_course():
     # Course List of users Buy courses
     buy_course_list = []
     for course in data:
+        print(course[0])
         course_data = Course.query.filter_by(id = course[0]).first()
-        
+        print(course_data.name)
         # To append course deitals according to course name, price
         buy_course_list.append({
             "Buy Course ID" : course.id,
@@ -213,6 +244,26 @@ def get_buy_course():
             "Course Price" : course_data.price
         })
     return jsonify({"message" : buy_course_list}),200
+
+
+@app.route("/get_users", methods = ["GET"])
+def get_users():
+    data = User.query.all()
+
+    users_list = []
+    for user in data:
+        users_list.append(
+            {
+                "ID" : user.id,
+                "Name" : user.name,
+                "Email" : user.email,
+                "is_admin" : user.is_admin,
+                "Address" : user.address
+            }
+        )
+    print(users_list)
+    return jsonify({"Users" : users_list})
+
 
 
 if __name__ == "__main__":
